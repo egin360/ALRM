@@ -5,6 +5,12 @@ body {
     color: #e0e0e0;
     margin: 0;
     padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    /* --- LÍNEA NUEVA --- */
+    overflow: hidden; /* Oculta cualquier scroll y deshabilita el rebote */
 }
 
 .container {
@@ -189,7 +195,6 @@ button:hover {
     margin-top: 5px;
     color: #d1d1d6;
     word-wrap: break-word;
-    /* font-family: monospace; <-- LÍNEA ELIMINADA */
 }
 
 /* Estilos para el Interruptor (Toggle Switch) */
