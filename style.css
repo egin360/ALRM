@@ -8,8 +8,8 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    align-items: flex-start; /* Alinea el contenido arriba */
     height: 100vh;
-    /* --- LÍNEA NUEVA --- */
     overflow: hidden; /* Oculta cualquier scroll y deshabilita el rebote */
 }
 
