@@ -1,22 +1,28 @@
 /* Estilos Generales */
+html {
+    height: 100%;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: #121212;
     color: #e0e0e0;
     margin: 0;
-    padding: 20px;
+}
+
+#app-wrapper {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    align-items: flex-start; /* Alinea el contenido arriba */
-    height: 100vh;
-    overflow: hidden; /* Oculta cualquier scroll y deshabilita el rebote */
+    justify-content: center;   /* Centra horizontalmente */
+    align-items: flex-start; /* Alinea en la parte superior */
+    width: 100%;
+    min-height: 100vh;         /* Ocupa al menos toda la altura de la pantalla */
+    padding: 40px 20px;        /* Margen superior de 40px, y 20px a los lados */
+    box-sizing: border-box;    /* Asegura que el padding no añada altura/anchura extra */
 }
 
 .container {
     width: 100%;
     max-width: 400px;
-    margin: 0 auto;
     text-align: center;
 }
 
