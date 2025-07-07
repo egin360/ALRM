@@ -8,21 +8,23 @@ body {
     background-color: #121212;
     color: #e0e0e0;
     margin: 0;
+    overflow: hidden; /* <-- LÍNEA AÑADIDA PARA FIJAR LA PANTALLA */
 }
 
 #app-wrapper {
     display: flex;
-    justify-content: center;   /* Centra horizontalmente */
-    align-items: flex-start; /* Alinea en la parte superior */
+    justify-content: center;
+    align-items: flex-start;
     width: 100%;
-    min-height: 100vh;         /* Ocupa al menos toda la altura de la pantalla */
-    padding: 40px 20px;        /* Margen superior de 40px, y 20px a los lados */
-    box-sizing: border-box;    /* Asegura que el padding no añada altura/anchura extra */
+    min-height: 100vh;
+    padding: 40px 20px;
+    box-sizing: border-box;
 }
 
 .container {
     width: 100%;
     max-width: 400px;
+    margin: 0 auto;
     text-align: center;
 }
 
