@@ -8,23 +8,20 @@ body {
     background-color: #121212;
     color: #e0e0e0;
     margin: 0;
-    overflow: hidden; /* <-- LÍNEA AÑADIDA PARA FIJAR LA PANTALLA */
-}
-
-#app-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
+    padding: 40px 20px; /* Margen superior de 40px e izquierdo/derecho de 20px */
+    
+    /* --- ESTILOS PARA FIJAR LA PANTALLA --- */
     width: 100%;
-    min-height: 100vh;
-    padding: 40px 20px;
-    box-sizing: border-box;
+    height: 100%;
+    position: fixed; /* Posición fija respecto a la ventana del navegador */
+    overflow: hidden; /* Oculta cualquier posible scroll */
+    box-sizing: border-box; /* El padding no añade tamaño extra al 100% */
 }
 
 .container {
     width: 100%;
     max-width: 400px;
-    margin: 0 auto;
+    margin: 0 auto; /* Centra el contenedor horizontalmente */
     text-align: center;
 }
 
