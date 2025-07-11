@@ -25,9 +25,6 @@ const loginContainer = document.getElementById('login-container');
 const dashboardContainer = document.getElementById('dashboard-container');
 const detailContainer = document.getElementById('detail-container');
 const loginForm = document.getElementById('login-form');
-const emailInput = document.getElementById('email');
-const passwordInput = document.getElementById('password');
-const loginError = document.getElementById('login-error');
 const logoutButton = document.getElementById('logout-button');
 const alarmsListDiv = document.getElementById('alarms-list');
 const backButton = document.getElementById('back-button');
@@ -44,13 +41,9 @@ function showScreen(screenName) {
     dashboardContainer.style.display = 'none';
     detailContainer.style.display = 'none';
 
-    if (screenName === 'login') {
-        loginContainer.style.display = 'block';
-    } else if (screenName === 'dashboard') {
-        dashboardContainer.style.display = 'block';
-    } else if (screenName === 'detail') {
-        detailContainer.style.display = 'block';
-    }
+    if (screenName === 'login') loginContainer.style.display = 'block';
+    if (screenName === 'dashboard') dashboardContainer.style.display = 'block';
+    if (screenName === 'detail') detailContainer.style.display = 'block';
 }
 
 // =================================================================
@@ -58,15 +51,12 @@ function showScreen(screenName) {
 // =================================================================
 auth.onAuthStateChanged((user) => {
     if (user) {
-        console.log("Usuario conectado:", user.uid);
         showScreen('dashboard');
         loadUserDashboard(user.uid);
     } else {
-        console.log("Usuario desconectado.");
+        // Limpiamos listeners activos al cerrar sesión
         for (const key in activeListeners) {
-            const listener = activeListeners[key];
-            database.ref(listener.path).off('value', listener.callback);
-            if(listener.interval) clearInterval(listener.interval);
+            database.ref(activeListeners[key].path).off('value', activeListeners[key].callback);
         }
         activeListeners = {};
         showScreen('login');
@@ -79,16 +69,14 @@ auth.onAuthStateChanged((user) => {
 function loadUserDashboard(uid) {
     const userPermissionsRef = database.ref(`users/${uid}/permissions`);
     userPermissionsRef.once('value', (snapshot) => {
-        const permissions = snapshot.val();
+        const permissions = snapshot.val() || {};
         alarmsListDiv.innerHTML = ''; 
-        if (!permissions) {
-            alarmsListDiv.innerHTML = '<p>No tienes permiso para ver ninguna alarma.</p>';
-            return;
-        }
+        
         let deviceOrder = ["donosti", "lasarte"]; 
         if (uid === "nUIqvaWUhjceO3OvtiaCfG1pBxJ3") {
             deviceOrder = ["lasarte", "donosti"];
         }
+
         deviceOrder.forEach(deviceId => {
             if (permissions[deviceId] === true) {
                 createAlarmListItem(deviceId);
@@ -100,12 +88,9 @@ function loadUserDashboard(uid) {
 function createAlarmListItem(deviceId) {
     const item = document.createElement('div');
     item.className = 'alarm-list-item';
-    item.dataset.deviceId = deviceId;
-
-    // Estructura HTML simplificada para un mejor centrado
+    
     item.innerHTML = `
         <span class="alarm-list-item-name">${deviceId}</span>
-        <div class="status-box">Cargando...</div>
         <label class="switch">
             <input type="checkbox">
             <span class="slider"></span>
@@ -113,74 +98,29 @@ function createAlarmListItem(deviceId) {
     `;
     alarmsListDiv.appendChild(item);
 
-    const statusBox = item.querySelector('.status-box');
     const switchInput = item.querySelector('input[type="checkbox"]');
     const switchLabel = item.querySelector('.switch');
     
-    let lastData = {};
-
-    function updateCardUI() {
-        if (Object.keys(lastData).length === 0) return;
-
-        const now = Date.now();
-        const lastSeen = lastData.last_seen || 0;
-        const isOnline = (now - lastSeen) < 30000;
-        const isActive = lastData.status === true;
-
-        // Actualizamos el estado del interruptor (checked) siempre
-        switchInput.checked = isActive;
-
-        if (isOnline) {
-            item.classList.remove('alarm-list-item-offline');
-            switchInput.disabled = false;
-            statusBox.textContent = isActive ? 'Activada' : 'Desactivada';
-            statusBox.className = isActive ? 'status-box status-box-active' : 'status-box status-box-inactive';
-        } else {
-            item.classList.add('alarm-list-item-offline');
-            switchInput.disabled = true;
-            statusBox.textContent = 'Sin Conexión';
-            statusBox.className = 'status-box status-box-offline';
-        }
-    }
-
-    const alarmRef = database.ref(`alarms/${deviceId}`);
-
-    alarmRef.once('value', (snapshot) => {
-        lastData = snapshot.val() || { status: false, last_seen: 0 };
-        updateCardUI();
-    });
-
-    const alarmCallback = (snapshot) => {
-        lastData = snapshot.val() || lastData;
-        updateCardUI();
+    const alarmStatusRef = database.ref(`alarms/${deviceId}/status`);
+    
+    // El listener solo actualiza el estado del interruptor
+    const statusCallback = (snapshot) => {
+        switchInput.checked = snapshot.val() === true;
     };
-    alarmRef.on('value', alarmCallback);
-    
-    const checkInterval = setInterval(() => {
-        if (!document.body.contains(item)) {
-            clearInterval(checkInterval);
-            const listenerInfo = activeListeners[deviceId];
-            if(listenerInfo) {
-                database.ref(listenerInfo.path).off('value', listenerInfo.callback);
-                delete activeListeners[deviceId];
-            }
-            return;
-        }
-        updateCardUI();
-    }, 3000);
+    alarmStatusRef.on('value', statusCallback);
+    activeListeners[`${deviceId}_status`] = { path: `alarms/${deviceId}/status`, callback: statusCallback };
 
-    activeListeners[deviceId] = { path: `alarms/${deviceId}`, callback: alarmCallback, interval: checkInterval };
-    
+    // Detenemos la propagación en el clic del interruptor
     switchLabel.addEventListener('click', (event) => {
         event.stopPropagation();
     });
     
+    // Cambiamos el estado en Firebase al tocar el interruptor
     switchInput.addEventListener('change', () => {
-        if (!switchInput.disabled) {
-            database.ref(`alarms/${deviceId}/status`).set(switchInput.checked);
-        }
+        alarmStatusRef.set(switchInput.checked);
     });
 
+    // Navegamos al detalle al pulsar en la tarjeta
     item.addEventListener('click', () => {
         showDetailScreen(deviceId);
     });
@@ -192,72 +132,14 @@ function createAlarmListItem(deviceId) {
 function showDetailScreen(deviceId) {
     showScreen('detail');
     detailAlarmName.textContent = deviceId;
-    detailContentDiv.innerHTML = '';
+    detailContentDiv.innerHTML = '<p>Cargando detalles...</p>'; // Placeholder
 
-    const card = document.createElement('div');
-    card.className = 'alarm-card';
-    // Estructura HTML con el botón "Volver" sin el símbolo "<"
-    card.innerHTML = `
-        <div class="detail-status-row">
-            <h3>Estado General</h3>
-            <label class="switch">
-                <input type="checkbox" id="detail-toggle-${deviceId}">
-                <span class="slider"></span>
-            </label>
-        </div>
-        <div class="status-box" id="detail-status-box-${deviceId}">Cargando...</div>
-        <h3 style="margin-top: 20px;">Estado Conexión</h3>
-        <div class="message-box" id="detail-connection-${deviceId}">Calculando...</div>
-        <h3 style="margin-top: 20px;">Sirena</h3>
-        <div class="message-box" id="detail-ringing-${deviceId}">Cargando...</div>
-    `;
-    detailContentDiv.appendChild(card);
-    
-    const detailToggle = document.getElementById(`detail-toggle-${deviceId}`);
-    const detailStatusBox = document.getElementById(`detail-status-box-${deviceId}`);
-    const detailConnection = document.getElementById(`detail-connection-${deviceId}`);
-    const detailRinging = document.getElementById(`detail-ringing-${deviceId}`);
-    
-    const alarmRef = database.ref(`alarms/${deviceId}`);
-
-    const detailCallback = (snapshot) => {
-        const data = snapshot.val();
-        if(data) {
-            const isActive = data.status === true;
-            detailToggle.checked = isActive;
-            detailStatusBox.textContent = isActive ? 'Activada' : 'Desactivada';
-            detailStatusBox.className = isActive ? 'status-box status-box-active' : 'status-box status-box-inactive';
-            const isRinging = data.ringing === true;
-            detailRinging.textContent = isRinging ? "¡SONANDO!" : "Silencio";
-            detailRinging.style.color = isRinging ? "#ff453a" : "#d1d1d6";
-            const now = Date.now();
-            const lastSeen = data.last_seen || 0;
-            const secondsAgo = Math.floor((now - lastSeen) / 1000);
-            if (secondsAgo < 30) {
-                detailConnection.textContent = "En línea";
-                detailConnection.style.color = "#34c759";
-            } else {
-                detailConnection.textContent = "Desconectado";
-                detailConnection.style.color = "#ff453a";
-            }
-        }
-    };
-    
-    alarmRef.on('value', detailCallback);
-    activeListeners[`detail_${deviceId}`] = { path: `alarms/${deviceId}`, callback: detailCallback };
-    
-    detailToggle.addEventListener('change', () => {
-        database.ref(`alarms/${deviceId}/status`).set(detailToggle.checked);
-    });
+    // Aquí iría la lógica para mostrar todos los detalles de la alarma
+    // (status, ringing, message, last_seen) como hicimos antes,
+    // pero por ahora lo dejamos simple para cumplir tus requisitos actuales.
 }
 
 backButton.addEventListener('click', () => {
-    const deviceId = detailAlarmName.textContent;
-    const listenerInfo = activeListeners[`detail_${deviceId}`];
-    if (listenerInfo) {
-        database.ref(listenerInfo.path).off('value', listenerInfo.callback);
-        delete activeListeners[`detail_${deviceId}`];
-    }
     showScreen('dashboard');
 });
 
@@ -266,14 +148,9 @@ backButton.addEventListener('click', () => {
 // =================================================================
 loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const email = emailInput.value;
-    const password = passwordInput.value;
-    
-    loginError.textContent = '';
-    auth.signInWithEmailAndPassword(email, password)
+    auth.signInWithEmailAndPassword(loginForm.email.value, loginForm.password.value)
         .catch((error) => {
-            loginError.textContent = "Error: Email o contraseña incorrectos.";
-            console.error("Error de login:", error.message);
+            loginForm.querySelector('.error-message').textContent = "Error: " + error.message;
         });
 });
 
