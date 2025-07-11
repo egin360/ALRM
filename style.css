@@ -80,24 +80,62 @@ button:hover {
     justify-content: flex-start;
 }
 
-/* El alarm-list-item ahora es un botón simple */
 .alarm-list-item {
     background-color: #1c1c1e;
     border-radius: 12px;
     border: 1px solid #333;
     cursor: pointer;
-    padding: 15px 20px;
+    padding: 15px;
     flex-basis: calc(50% - 40px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transition: background-color 0.4s ease, border-color 0.4s ease;
+}
+
+.alarm-list-item-offline {
+    background-color: #5c1f1f;
+    border-color: #8b2c2c;
+}
+
+.alarm-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
+    width: 100%;
+    margin-bottom: 5px;
 }
 
 .alarm-list-item-name {
     font-size: 18px;
     font-weight: 600;
     text-transform: capitalize;
+}
+
+.status-box {
+    width: 100%;
+    padding: 8px 0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+    text-align: center;
+}
+
+.status-box-active {
+    background-color: #34c759;
+    color: #ffffff;
+}
+
+.status-box-inactive {
+    background-color: #555;
+    color: #e0e0e0;
+}
+
+.status-box-offline {
+    background-color: #8b2c2c;
+    color: #f5c5c5;
 }
 
 /* Estilos de la Pantalla de Detalle */
@@ -110,67 +148,4 @@ button:hover {
     text-align: left;
 }
 
-/* --- CAMBIO AQUÍ --- */
-#detail-alarm-name {
-    text-transform: capitalize;
-    flex-grow: 1; 
-    text-align: center; /* Centra el título */
-    margin: 0;
-    padding-right: 60px; /* Compensa el espacio del botón "volver" */
-}
-
-.alarm-card {
-    background-color: #1c1c1e;
-    padding: 20px;
-    border-radius: 12px;
-    margin-top: 10px;
-    border: 1px solid #333;
-    text-align: left;
-}
-
-/* Estilos para el Interruptor (Toggle Switch) */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 51px;
-    height: 31px;
-    flex-shrink: 0;
-}
-
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #d12727; /* Rojo por defecto (inactivo) */
-    transition: .4s;
-    border-radius: 31px;
-}
-
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 27px;
-    width: 27px;
-    left: 2px;
-    bottom: 2px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-}
-
-input:checked + .slider {
-    background-color: #34c759; /* Verde cuando está activado */
-}
-
-input:checked + .slider:before {
-    transform: translateX(20px);
-}
+#
