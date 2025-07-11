@@ -61,9 +61,10 @@ button:hover {
 /* Estilos del Panel de Control */
 .header {
     display: flex;
+    justify-content: space-between; /* <-- CAMBIO AQUÍ */
     align-items: center;
     margin-bottom: 20px;
-    position: relative;
+    position: relative; /* Mantenemos la posición relativa por si acaso */
 }
 
 #logout-button {
@@ -149,14 +150,18 @@ button:hover {
     text-align: left;
 }
 
+/* --- NUEVO ESTILO --- */
+.header-spacer {
+    width: 60px; /* Mismo ancho que el botón "Volver" */
+}
+
 /* --- CAMBIO AQUÍ --- */
 #detail-alarm-name, #detail-alarm-name-log {
     text-transform: capitalize;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    pointer-events: none; 
-    white-space: nowrap; /* Evita que el texto se divida en dos líneas */
+    margin: 0;
+    text-align: center; /* El flexbox se encarga del resto */
+    flex-grow: 1; /* Ocupa el espacio del medio */
+    /* Se eliminan las reglas de position: absolute */
 }
 
 .alarm-card {
@@ -171,8 +176,8 @@ button:hover {
 .alarm-card h3 {
     margin-top: 20px;
     margin-bottom: 10px;
-    padding: 0;
-    border: 0;
+    padding-top: 15px;
+    border-top: 1px solid #333;
 }
 
 .detail-status-row {
@@ -184,6 +189,8 @@ button:hover {
 
 .detail-status-row h3 {
     margin: 0;
+    border: none;
+    padding: 0;
 }
 
 .message-box {
