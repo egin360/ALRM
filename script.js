@@ -18,6 +18,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const database = firebase.database();
 
+
 // =================================================================
 //  REFERENCIAS A ELEMENTOS HTML
 // =================================================================
@@ -54,9 +55,10 @@ auth.onAuthStateChanged((user) => {
         showScreen('dashboard');
         loadUserDashboard(user.uid);
     } else {
-        // Limpiamos listeners activos al cerrar sesión
         for (const key in activeListeners) {
-            database.ref(activeListeners[key].path).off('value', activeListeners[key].callback);
+            const listener = activeListeners[key];
+            database.ref(listener.path).off('value', listener.callback);
+            if(listener.interval) clearInterval(listener.interval);
         }
         activeListeners = {};
         showScreen('login');
@@ -85,75 +87,4 @@ function loadUserDashboard(uid) {
     });
 }
 
-function createAlarmListItem(deviceId) {
-    const item = document.createElement('div');
-    item.className = 'alarm-list-item';
-    
-    item.innerHTML = `
-        <span class="alarm-list-item-name">${deviceId}</span>
-        <label class="switch">
-            <input type="checkbox">
-            <span class="slider"></span>
-        </label>
-    `;
-    alarmsListDiv.appendChild(item);
-
-    const switchInput = item.querySelector('input[type="checkbox"]');
-    const switchLabel = item.querySelector('.switch');
-    
-    const alarmStatusRef = database.ref(`alarms/${deviceId}/status`);
-    
-    // El listener solo actualiza el estado del interruptor
-    const statusCallback = (snapshot) => {
-        switchInput.checked = snapshot.val() === true;
-    };
-    alarmStatusRef.on('value', statusCallback);
-    activeListeners[`${deviceId}_status`] = { path: `alarms/${deviceId}/status`, callback: statusCallback };
-
-    // Detenemos la propagación en el clic del interruptor
-    switchLabel.addEventListener('click', (event) => {
-        event.stopPropagation();
-    });
-    
-    // Cambiamos el estado en Firebase al tocar el interruptor
-    switchInput.addEventListener('change', () => {
-        alarmStatusRef.set(switchInput.checked);
-    });
-
-    // Navegamos al detalle al pulsar en la tarjeta
-    item.addEventListener('click', () => {
-        showDetailScreen(deviceId);
-    });
-}
-
-// =================================================================
-//  LÓGICA DE LA PANTALLA DE DETALLE
-// =================================================================
-function showDetailScreen(deviceId) {
-    showScreen('detail');
-    detailAlarmName.textContent = deviceId;
-    detailContentDiv.innerHTML = '<p>Cargando detalles...</p>'; // Placeholder
-
-    // Aquí iría la lógica para mostrar todos los detalles de la alarma
-    // (status, ringing, message, last_seen) como hicimos antes,
-    // pero por ahora lo dejamos simple para cumplir tus requisitos actuales.
-}
-
-backButton.addEventListener('click', () => {
-    showScreen('dashboard');
-});
-
-// =================================================================
-//  MANEJADORES DE EVENTOS DE LOGIN/LOGOUT
-// =================================================================
-loginForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    auth.signInWithEmailAndPassword(loginForm.email.value, loginForm.password.value)
-        .catch((error) => {
-            loginForm.querySelector('.error-message').textContent = "Error: " + error.message;
-        });
-});
-
-logoutButton.addEventListener('click', () => {
-    auth.signOut();
-});
+function
