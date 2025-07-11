@@ -149,12 +149,14 @@ button:hover {
     text-align: left;
 }
 
+/* --- CAMBIO AQUÍ --- */
 #detail-alarm-name, #detail-alarm-name-log {
     text-transform: capitalize;
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
     pointer-events: none; 
+    white-space: nowrap; /* Evita que el texto se divida en dos líneas */
 }
 
 .alarm-card {
