@@ -1,27 +1,18 @@
 /* Estilos Generales */
-html {
-    height: 100%;
-}
-
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: #121212;
     color: #e0e0e0;
     margin: 0;
-    padding: 40px 20px; /* Margen superior de 40px e izquierdo/derecho de 20px */
-    
-    /* --- ESTILOS PARA FIJAR LA PANTALLA --- */
-    width: 100%;
-    height: 100%;
-    position: fixed; /* Posición fija respecto a la ventana del navegador */
-    overflow: hidden; /* Oculta cualquier posible scroll */
-    box-sizing: border-box; /* El padding no añade tamaño extra al 100% */
+    padding: 40px 20px;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .container {
     width: 100%;
     max-width: 400px;
-    margin: 0 auto; /* Centra el contenedor horizontalmente */
+    margin: 0 auto;
     text-align: center;
 }
 
@@ -98,7 +89,7 @@ button:hover {
     flex-basis: calc(50% - 40px);
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: center; /* Esto centrará los elementos hijos */
     gap: 10px;
     transition: background-color 0.4s ease, border-color 0.4s ease;
 }
@@ -108,18 +99,13 @@ button:hover {
     border-color: #8b2c2c;
 }
 
-.alarm-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    margin-bottom: 5px;
-}
+/* La regla .alarm-header se ha eliminado para simplificar el centrado */
 
 .alarm-list-item-name {
     font-size: 18px;
     font-weight: 600;
     text-transform: capitalize;
+    margin-bottom: 5px; /* Añadimos un pequeño margen inferior */
 }
 
 .status-box {
