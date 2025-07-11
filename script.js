@@ -19,9 +19,8 @@ const auth = firebase.auth();
 const database = firebase.database();
 
 // =================================================================
-//  PASO 2: REFERENCIAS A ELEMENTOS HTML
+//  REFERENCIAS A ELEMENTOS HTML
 // =================================================================
-
 const loginContainer = document.getElementById('login-container');
 const dashboardContainer = document.getElementById('dashboard-container');
 const detailContainer = document.getElementById('detail-container');
@@ -38,9 +37,8 @@ const detailContentDiv = document.getElementById('detail-content');
 let activeListeners = {};
 
 // =================================================================
-//  PASO 3: LÓGICA DE NAVEGACIÓN Y VISTAS
+//  LÓGICA DE NAVEGACIÓN Y VISTAS
 // =================================================================
-
 function showScreen(screenName) {
     loginContainer.style.display = 'none';
     dashboardContainer.style.display = 'none';
@@ -56,9 +54,8 @@ function showScreen(screenName) {
 }
 
 // =================================================================
-//  PASO 4: EL CONTROLADOR PRINCIPAL (AUTENTICACIÓN)
+//  CONTROLADOR PRINCIPAL (AUTENTICACIÓN)
 // =================================================================
-
 auth.onAuthStateChanged((user) => {
     if (user) {
         console.log("Usuario conectado:", user.uid);
@@ -69,6 +66,7 @@ auth.onAuthStateChanged((user) => {
         for (const key in activeListeners) {
             const listener = activeListeners[key];
             database.ref(listener.path).off('value', listener.callback);
+            if(listener.interval) clearInterval(listener.interval);
         }
         activeListeners = {};
         showScreen('login');
@@ -76,26 +74,21 @@ auth.onAuthStateChanged((user) => {
 });
 
 // =================================================================
-//  PASO 5: LÓGICA DEL DASHBOARD (PANTALLA PRINCIPAL)
+//  LÓGICA DEL DASHBOARD (PANTALLA PRINCIPAL)
 // =================================================================
-
 function loadUserDashboard(uid) {
     const userPermissionsRef = database.ref(`users/${uid}/permissions`);
-    
     userPermissionsRef.once('value', (snapshot) => {
         const permissions = snapshot.val();
         alarmsListDiv.innerHTML = ''; 
-
         if (!permissions) {
             alarmsListDiv.innerHTML = '<p>No tienes permiso para ver ninguna alarma.</p>';
             return;
         }
-        
         let deviceOrder = ["donosti", "lasarte"]; 
-        if (uid === "nUIqvaWUhjceO3OvtiaCfG1pBxJ3") { // UID corregido
+        if (uid === "nUIqvaWUhjceO3OvtiaCfG1pBxJ3") {
             deviceOrder = ["lasarte", "donosti"];
         }
-
         deviceOrder.forEach(deviceId => {
             if (permissions[deviceId] === true) {
                 createAlarmListItem(deviceId);
@@ -104,21 +97,19 @@ function loadUserDashboard(uid) {
     });
 }
 
-// --- FUNCIÓN OPTIMIZADA ---
 function createAlarmListItem(deviceId) {
     const item = document.createElement('div');
     item.className = 'alarm-list-item';
     item.dataset.deviceId = deviceId;
 
+    // Estructura HTML simplificada para un mejor centrado
     item.innerHTML = `
-        <div class="alarm-header">
-            <span class="alarm-list-item-name">${deviceId}</span>
-            <label class="switch">
-                <input type="checkbox">
-                <span class="slider"></span>
-            </label>
-        </div>
+        <span class="alarm-list-item-name">${deviceId}</span>
         <div class="status-box">Cargando...</div>
+        <label class="switch">
+            <input type="checkbox">
+            <span class="slider"></span>
+        </label>
     `;
     alarmsListDiv.appendChild(item);
 
@@ -134,13 +125,14 @@ function createAlarmListItem(deviceId) {
         const now = Date.now();
         const lastSeen = lastData.last_seen || 0;
         const isOnline = (now - lastSeen) < 30000;
+        const isActive = lastData.status === true;
+
+        // Actualizamos el estado del interruptor (checked) siempre
+        switchInput.checked = isActive;
 
         if (isOnline) {
             item.classList.remove('alarm-list-item-offline');
             switchInput.disabled = false;
-            
-            const isActive = lastData.status === true;
-            switchInput.checked = isActive;
             statusBox.textContent = isActive ? 'Activada' : 'Desactivada';
             statusBox.className = isActive ? 'status-box status-box-active' : 'status-box status-box-inactive';
         } else {
@@ -160,22 +152,25 @@ function createAlarmListItem(deviceId) {
 
     const alarmCallback = (snapshot) => {
         lastData = snapshot.val() || lastData;
-        // --- LÍNEA CLAVE AÑADIDA ---
-        // Forzamos la actualización de la UI inmediatamente al recibir datos
         updateCardUI();
     };
     alarmRef.on('value', alarmCallback);
-    activeListeners[deviceId] = { path: `alarms/${deviceId}`, callback: alarmCallback };
-
+    
     const checkInterval = setInterval(() => {
         if (!document.body.contains(item)) {
             clearInterval(checkInterval);
+            const listenerInfo = activeListeners[deviceId];
+            if(listenerInfo) {
+                database.ref(listenerInfo.path).off('value', listenerInfo.callback);
+                delete activeListeners[deviceId];
+            }
             return;
         }
-        // El temporizador sigue actualizando para el estado de conexión
         updateCardUI();
     }, 3000);
 
+    activeListeners[deviceId] = { path: `alarms/${deviceId}`, callback: alarmCallback, interval: checkInterval };
+    
     switchLabel.addEventListener('click', (event) => {
         event.stopPropagation();
     });
@@ -192,9 +187,8 @@ function createAlarmListItem(deviceId) {
 }
 
 // =================================================================
-//  PASO 6: LÓGICA DE LA PANTALLA DE DETALLE
+//  LÓGICA DE LA PANTALLA DE DETALLE
 // =================================================================
-
 function showDetailScreen(deviceId) {
     showScreen('detail');
     detailAlarmName.textContent = deviceId;
@@ -202,6 +196,7 @@ function showDetailScreen(deviceId) {
 
     const card = document.createElement('div');
     card.className = 'alarm-card';
+    // Estructura HTML con el botón "Volver" sin el símbolo "<"
     card.innerHTML = `
         <div class="detail-status-row">
             <h3>Estado General</h3>
@@ -211,10 +206,8 @@ function showDetailScreen(deviceId) {
             </label>
         </div>
         <div class="status-box" id="detail-status-box-${deviceId}">Cargando...</div>
-
         <h3 style="margin-top: 20px;">Estado Conexión</h3>
         <div class="message-box" id="detail-connection-${deviceId}">Calculando...</div>
-        
         <h3 style="margin-top: 20px;">Sirena</h3>
         <div class="message-box" id="detail-ringing-${deviceId}">Cargando...</div>
     `;
@@ -234,15 +227,12 @@ function showDetailScreen(deviceId) {
             detailToggle.checked = isActive;
             detailStatusBox.textContent = isActive ? 'Activada' : 'Desactivada';
             detailStatusBox.className = isActive ? 'status-box status-box-active' : 'status-box status-box-inactive';
-
             const isRinging = data.ringing === true;
             detailRinging.textContent = isRinging ? "¡SONANDO!" : "Silencio";
             detailRinging.style.color = isRinging ? "#ff453a" : "#d1d1d6";
-
             const now = Date.now();
             const lastSeen = data.last_seen || 0;
             const secondsAgo = Math.floor((now - lastSeen) / 1000);
-
             if (secondsAgo < 30) {
                 detailConnection.textContent = "En línea";
                 detailConnection.style.color = "#34c759";
@@ -272,9 +262,8 @@ backButton.addEventListener('click', () => {
 });
 
 // =================================================================
-//  PASO 7: MANEJADORES DE EVENTOS DE LOGIN/LOGOUT
+//  MANEJADORES DE EVENTOS DE LOGIN/LOGOUT
 // =================================================================
-
 loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const email = emailInput.value;
