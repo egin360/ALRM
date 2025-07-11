@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>EGIN360 ALMR</title>
+    <link rel="icon" href="icono.png" type="image/png">
+    <link rel="apple-touch-icon" href="icono.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+    <div id="login-container" class="container">
+        <h1>Iniciar Sesión</h1>
+        <form id="login-form">
+            <input type="email" id="email" placeholder="Correo electrónico" required>
+            <input type="password" id="password" placeholder="Contraseña" required>
+            <button type="submit">Entrar</button>
+        </form>
+        <p id="login-error" class="error-message"></p>
+    </div>
+
+    <div id="dashboard-container" class="container" style="display: none;">
+        <div class="header">
+            <h1>Mis Alarmas</h1>
+            <button id="logout-button">Salir</button>
+        </div>
+        <div id="alarms-list"></div>
+    </div>
+    
+    <div id="detail-container" class="container" style="display: none;">
+        <div class="header">
+            <button id="back-to-dashboard-button">Volver</button>
+            <h1 id="detail-alarm-name"></h1>
+        </div>
+        <div id="detail-content"></div>
+    </div>
+
+    <div id="log-container" class="container" style="display: none;">
+        <div class="header">
+            <button id="back-to-detail-button">Volver</button>
+            <h1 id="detail-alarm-name-log"></h1>
+        </div>
+        <div id="log-content"></div>
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
