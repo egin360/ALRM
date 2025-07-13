@@ -1,33 +1,35 @@
 /* Estilos Generales */
-html, body {
-    height: 100%;
-    width: 100%;
-    margin: 0;
-    overflow: hidden; /* Oculta cualquier scroll en el nivel más alto */
+html {
+  height: 100%;
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: #121212;
     color: #e0e0e0;
+    margin: 0;
     
-    /* Hacemos que el body sea un contenedor flexible para centrar el contenido */
-    display: flex;
-    justify-content: center;
+    /* --- REGLAS CLAVE PARA BLOQUEAR EL SCROLL --- */
+    position: fixed; /* Ancla el body a la ventana */
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Oculta cualquier desbordamiento */
+    -webkit-overflow-scrolling: touch; /* Propiedad específica de iOS */
 }
 
 #app-wrapper {
     width: 100%;
-    max-width: 400px;
+    height: 100%;
     padding: 40px 20px;
     box-sizing: border-box;
-    /* Permitimos el scroll solo dentro de este contenedor si es necesario */
-    overflow-y: auto;
-    height: 100%;
+    overflow-y: auto; /* Permite el scroll solo dentro del wrapper si fuera necesario (ej: en el log) */
+    text-align: center;
 }
 
 .container {
     width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
     text-align: center;
 }
 
@@ -255,6 +257,11 @@ button:hover {
     flex-shrink: 0;
 }
 
+.switch-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
 .switch input {
     opacity: 0;
     width: 0;
@@ -291,13 +298,4 @@ input:checked + .slider {
 
 input:checked + .slider:before {
     transform: translateX(20px);
-}
-
-input:disabled + .slider {
-    background-color: #444;
-    cursor: not-allowed;
-}
-
-input:disabled + .slider:before {
-    background-color: #aaa;
 }
