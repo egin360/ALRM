@@ -296,11 +296,14 @@ function writeToConnectionLog(deviceId, newEvent) {
     const logRef = database.ref(`alarms/${deviceId}/connection_log`);
     
     logRef.transaction((currentLogData) => {
-        if (currentLogData === null) {
+        // --- CAMBIO AQUÍ: Comprobamos si es null O una cadena vacía ---
+        if (currentLogData === null || currentLogData === "") {
+            // Si el log no existe o está vacío, creamos la primera entrada
             const newLogId = database.ref().push().key;
             return { [newLogId]: { event: newEvent, timestamp: firebase.database.ServerValue.TIMESTAMP } };
         }
 
+        // Si ya hay datos, buscamos la entrada más reciente
         let lastTimestamp = 0;
         let lastEventInDB = null;
         for (const key in currentLogData) {
@@ -310,17 +313,23 @@ function writeToConnectionLog(deviceId, newEvent) {
             }
         }
         
+        // Si el nuevo evento es diferente al último, lo añadimos.
         if (lastEventInDB !== newEvent) {
             console.log(`Escribiendo nuevo evento en el log: '${newEvent}' para ${deviceId}`);
             const newLogId = database.ref().push().key;
             currentLogData[newLogId] = { event: newEvent, timestamp: firebase.database.ServerValue.TIMESTAMP };
         }
         
+        // Devolvemos los datos actualizados para que Firebase los guarde
         return currentLogData;
 
     }, (error, committed, snapshot) => {
         if (error) {
             console.error('La transacción del log falló:', error);
+        } else if (!committed) {
+            console.log('No se escribió en el log (probablemente porque otra app ya lo hizo).');
+        } else {
+            console.log('Log de conexión actualizado con éxito.');
         }
     });
 }
