@@ -81,9 +81,9 @@ function loadUserDashboard(uid) {
         const permissions = snapshot.val() || {};
         alarmsListDiv.innerHTML = '';
 
-        let deviceOrder = ["donosti", "lasarte"];
+        let deviceOrder = ["Donosti", "Lasarte"];
         if (uid === "nUIqvaWUhjceO3OvtiaCfG1pBxJ3") {
-            deviceOrder = ["lasarte", "donosti"];
+            deviceOrder = ["Lasarte", "Donosti"];
         }
 
         deviceOrder.forEach(deviceId => {
