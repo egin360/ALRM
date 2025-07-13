@@ -79,7 +79,7 @@ function loadUserDashboard(uid) {
         const permissions = snapshot.val() || {};
         alarmsListDiv.innerHTML = '';
 
-        // --- CAMBIO AQUÍ: Usamos los nombres con mayúscula ---
+        // Nombres con mayúscula
         let deviceOrder = ["Donosti", "Lasarte"];
         if (uid === "nUIqvaWUhjceO3OvtiaCfG1pBxJ3") {
             deviceOrder = ["Lasarte", "Donosti"];
@@ -98,7 +98,7 @@ function createAlarmListItem(deviceId) {
     item.className = 'alarm-list-item';
     item.dataset.deviceId = deviceId;
     
-    // Ahora el deviceId ya viene con mayúscula, no hace falta capitalizar
+    // El deviceId ya viene con mayúscula, no se necesita lógica extra
     item.innerHTML = `
         <div class="alarm-header">
             <span class="alarm-list-item-name">${deviceId}</span>
@@ -189,10 +189,64 @@ function createAlarmListItem(deviceId) {
 function showDetailScreen(deviceId) {
     currentDetailDevice = deviceId;
     showScreen('detail');
-    // El deviceId ya viene con mayúscula
-    detailAlarmName.textContent = deviceId;
-    detailContentDiv.innerHTML = `...`; // El contenido de la tarjeta no cambia
-    // ... El resto de la función no cambia ...
+    detailAlarmName.textContent = deviceId; // Ya viene con mayúscula
+    detailContentDiv.innerHTML = `
+        <div class="alarm-card">
+            <div class="detail-status-row">
+                <h3>Estado General</h3>
+                <label class="switch">
+                    <input type="checkbox" id="detail-toggle-${deviceId}">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="status-box" id="detail-status-box-${deviceId}">Cargando...</div>
+            <h3 style="margin-top: 20px;">Estado Conexión</h3>
+            <div class="message-box" id="detail-connection-${deviceId}">Calculando...</div>
+            <h3 style="margin-top: 20px;">Sirena</h3>
+            <div class="message-box" id="detail-ringing-${deviceId}">Cargando...</div>
+            <button id="log-button">Log conexiones</button>
+        </div>
+    `;
+
+    document.getElementById('log-button').addEventListener('click', () => {
+        showLogScreen(deviceId);
+    });
+
+    const detailToggle = document.getElementById(`detail-toggle-${deviceId}`);
+    const detailStatusBox = document.getElementById(`detail-status-box-${deviceId}`);
+    const detailConnection = document.getElementById(`detail-connection-${deviceId}`);
+    const detailRinging = document.getElementById(`detail-ringing-${deviceId}`);
+    const alarmRef = database.ref(`alarms/${deviceId}`);
+
+    const detailCallback = (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            const isActive = data.status === true;
+            detailToggle.checked = isActive;
+            detailStatusBox.textContent = isActive ? 'Activada' : 'Desactivada';
+            detailStatusBox.className = isActive ? 'status-box status-box-active' : 'status-box status-box-inactive';
+            const isRinging = data.ringing === true;
+            detailRinging.textContent = isRinging ? "¡SONANDO!" : "Silencio";
+            detailRinging.style.color = isRinging ? "#ff453a" : "#d1d1d6";
+            const now = Date.now();
+            const lastSeen = data.last_seen || 0;
+            const secondsAgo = Math.floor((now - lastSeen) / 1000);
+            if (secondsAgo < 30) {
+                detailConnection.textContent = "En línea";
+                detailConnection.style.color = "#34c759";
+            } else {
+                detailConnection.textContent = "Desconectado";
+                detailConnection.style.color = "#ff453a";
+            }
+        }
+    };
+
+    alarmRef.on('value', detailCallback);
+    activeListeners[`detail_${deviceId}`] = { path: `alarms/${deviceId}`, callback: detailCallback };
+
+    detailToggle.addEventListener('change', () => {
+        database.ref(`alarms/${deviceId}/status`).set(detailToggle.checked);
+    });
 }
 
 // =================================================================
@@ -200,9 +254,105 @@ function showDetailScreen(deviceId) {
 // =================================================================
 function showLogScreen(deviceId) {
     showScreen('log');
-    // El deviceId ya viene con mayúscula
-    detailAlarmNameLog.textContent = `Log: ${deviceId}`;
-    // ... El resto de la función no cambia ...
+    detailAlarmNameLog.textContent = `Log: ${deviceId}`; // Ya viene con mayúscula
+    logContentDiv.innerHTML = 'Cargando registros...';
+
+    const logRef = database.ref(`alarms/${deviceId}/connection_log`);
+    const logCallback = (snapshot) => {
+        logContentDiv.innerHTML = '';
+        if (!snapshot.exists()) {
+            logContentDiv.innerHTML = 'No hay registros.';
+            return;
+        }
+        let entries = [];
+        snapshot.forEach((childSnapshot) => {
+            entries.push(childSnapshot.val());
+        });
+
+        entries.reverse().forEach(log => {
+            const date = new Date(log.timestamp);
+            const formattedDate = date.toLocaleString('es-ES', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+            });
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'log-entry';
+            if (log.event === 'connected') {
+                entryDiv.className += ' log-entry-connected';
+                entryDiv.textContent = `[${formattedDate}] Conectado`;
+            } else {
+                entryDiv.className += ' log-entry-disconnected';
+                entryDiv.textContent = `[${formattedDate}] Desconectado`;
+            }
+            logContentDiv.appendChild(entryDiv);
+        });
+    };
+
+    logRef.orderByChild('timestamp').limitToLast(50).on('value', logCallback);
+    activeListeners[`log_${deviceId}`] = { path: `alarms/${deviceId}/connection_log`, callback: logCallback };
 }
 
-// ... (El resto del script no necesita cambios) ...
+function writeToConnectionLog(deviceId, newEvent) {
+    const logRef = database.ref(`alarms/${deviceId}/connection_log`);
+    
+    logRef.transaction((currentLogData) => {
+        if (currentLogData === null || currentLogData === "") {
+            const newLogId = database.ref().push().key;
+            return { [newLogId]: { event: newEvent, timestamp: firebase.database.ServerValue.TIMESTAMP } };
+        }
+        let lastTimestamp = 0;
+        let lastEventInDB = null;
+        for (const key in currentLogData) {
+            if (currentLogData[key].timestamp > lastTimestamp) {
+                lastTimestamp = currentLogData[key].timestamp;
+                lastEventInDB = currentLogData[key].event;
+            }
+        }
+        if (lastEventInDB !== newEvent) {
+            const newLogId = database.ref().push().key;
+            currentLogData[newLogId] = { event: newEvent, timestamp: firebase.database.ServerValue.TIMESTAMP };
+        }
+        return currentLogData;
+    }, (error, committed, snapshot) => {
+        if (error) console.error('La transacción del log falló:', error);
+    });
+}
+
+// =================================================================
+//  BOTONES DE NAVEGACIÓN Y LOGIN/LOGOUT
+// =================================================================
+backToDashboardButton.addEventListener('click', () => {
+    const deviceId = currentDetailDevice;
+    const listenerInfo = activeListeners[`detail_${deviceId}`];
+    if (listenerInfo) {
+        database.ref(listenerInfo.path).off('value', listenerInfo.callback);
+        delete activeListeners[`detail_${deviceId}`];
+    }
+    showScreen('dashboard');
+});
+
+backToDetailButton.addEventListener('click', () => {
+    const listenerInfo = activeListeners[`log_${currentDetailDevice}`];
+    if (listenerInfo) {
+        database.ref(listenerInfo.path).off('value', listenerInfo.callback);
+        delete activeListeners[`log_${currentDetailDevice}`];
+    }
+    showDetailScreen(currentDetailDevice);
+});
+
+loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const loginError = document.getElementById('login-error');
+    loginError.textContent = '';
+    auth.signInWithEmailAndPassword(email, password)
+        .catch((error) => {
+            loginError.textContent = "Error: Email o contraseña incorrectos.";
+            console.error("Error de login:", error.code, error.message);
+        });
+});
+
+logoutButton.addEventListener('click', () => {
+    auth.signOut();
+});
