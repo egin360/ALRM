@@ -22,12 +22,15 @@ const loginContainer = document.getElementById('login-container');
 const dashboardContainer = document.getElementById('dashboard-container');
 const detailContainer = document.getElementById('detail-container');
 const logContainer = document.getElementById('log-container');
+
 const loginForm = document.getElementById('login-form');
 const logoutButton = document.getElementById('logout-button');
 const alarmsListDiv = document.getElementById('alarms-list');
+
 const backToDashboardButton = document.getElementById('back-to-dashboard-button');
 const detailAlarmName = document.getElementById('detail-alarm-name');
 const detailContentDiv = document.getElementById('detail-content');
+
 const backToDetailButton = document.getElementById('back-to-detail-button');
 const logContentDiv = document.getElementById('log-content');
 const detailAlarmNameLog = document.getElementById('detail-alarm-name-log');
@@ -58,6 +61,7 @@ auth.onAuthStateChanged((user) => {
         showScreen('dashboard');
         loadUserDashboard(user.uid);
     } else {
+        // Limpia todos los listeners y temporizadores al cerrar sesión
         for (const key in activeListeners) {
             const listener = activeListeners[key];
             if (listener.path) database.ref(listener.path).off('value', listener.callback);
@@ -111,15 +115,20 @@ function createAlarmListItem(deviceId) {
     const switchLabel = item.querySelector('.switch');
 
     let lastData = {};
+    let wasOnline = null;
 
     function updateCardUI() {
         if (Object.keys(lastData).length === 0) return;
 
         const now = Date.now();
         const lastSeen = lastData.last_seen || 0;
-        // --- CAMBIO AQUÍ: Cambiado de 90000 a 30000 ---
-        const isOnline = (now - lastSeen) < 30000; 
+        const isOnline = (now - lastSeen) < 30000;
         const isActive = lastData.status === true;
+        
+        if (wasOnline !== null && wasOnline !== isOnline) {
+            writeToConnectionLog(deviceId, isOnline ? 'connected' : 'disconnected');
+        }
+        wasOnline = isOnline;
 
         switchInput.checked = isActive;
         if (isOnline) {
@@ -136,7 +145,42 @@ function createAlarmListItem(deviceId) {
     }
 
     const alarmRef = database.ref(`alarms/${deviceId}`);
-    // ... (el resto de la función no necesita cambios)
+    const alarmCallback = (snapshot) => {
+        lastData = snapshot.val() || {};
+        updateCardUI();
+    };
+
+    alarmRef.once('value', (snapshot) => {
+        lastData = snapshot.val() || { status: false, last_seen: 0 };
+        const now = Date.now();
+        wasOnline = (now - (lastData.last_seen || 0)) < 30000;
+        updateCardUI();
+        alarmRef.on('value', alarmCallback);
+        activeListeners[deviceId] = { path: `alarms/${deviceId}`, callback: alarmCallback };
+    });
+
+    const checkInterval = setInterval(() => {
+        if (!document.body.contains(item)) {
+            clearInterval(checkInterval);
+            const listenerInfo = activeListeners[deviceId];
+            if (listenerInfo) {
+                database.ref(listenerInfo.path).off('value', listenerInfo.callback);
+                delete activeListeners[deviceId];
+            }
+            return;
+        }
+        updateCardUI();
+    }, 3000);
+    
+    activeListeners[`interval_${deviceId}`] = { interval: checkInterval };
+
+    switchLabel.addEventListener('click', (event) => event.stopPropagation());
+    switchInput.addEventListener('change', () => {
+        if (!switchLabel.classList.contains('switch-disabled')) {
+            database.ref(`alarms/${deviceId}/status`).set(switchInput.checked);
+        }
+    });
+    item.addEventListener('click', () => showDetailScreen(deviceId));
 }
 
 // =================================================================
@@ -187,7 +231,7 @@ function showDetailScreen(deviceId) {
             const now = Date.now();
             const lastSeen = data.last_seen || 0;
             const secondsAgo = Math.floor((now - lastSeen) / 1000);
-            if (secondsAgo < 90) {
+            if (secondsAgo < 30) {
                 detailConnection.textContent = "En línea";
                 detailConnection.style.color = "#34c759";
             } else {
@@ -247,6 +291,41 @@ function showLogScreen(deviceId) {
     logRef.orderByChild('timestamp').limitToLast(50).on('value', logCallback);
     activeListeners[`log_${deviceId}`] = { path: `alarms/${deviceId}/connection_log`, callback: logCallback };
 }
+
+// --- FUNCIÓN DE ESCRITURA DE LOG CON TRANSACCIÓN ---
+function writeToConnectionLog(deviceId, newEvent) {
+    const logRef = database.ref(`alarms/${deviceId}/connection_log`);
+    
+    logRef.transaction((currentLogData) => {
+        if (currentLogData === null || currentLogData === "") {
+            const newLogId = database.ref().push().key;
+            return { [newLogId]: { event: newEvent, timestamp: firebase.database.ServerValue.TIMESTAMP } };
+        }
+
+        let lastTimestamp = 0;
+        let lastEventInDB = null;
+        for (const key in currentLogData) {
+            if (currentLogData[key].timestamp > lastTimestamp) {
+                lastTimestamp = currentLogData[key].timestamp;
+                lastEventInDB = currentLogData[key].event;
+            }
+        }
+        
+        if (lastEventInDB !== newEvent) {
+            console.log(`Escribiendo nuevo evento en el log: '${newEvent}' para ${deviceId}`);
+            const newLogId = database.ref().push().key;
+            currentLogData[newLogId] = { event: newEvent, timestamp: firebase.database.ServerValue.TIMESTAMP };
+        }
+        
+        return currentLogData;
+
+    }, (error, committed, snapshot) => {
+        if (error) {
+            console.error('La transacción del log falló:', error);
+        }
+    });
+}
+
 
 // =================================================================
 //  BOTONES DE NAVEGACIÓN Y LOGIN/LOGOUT
