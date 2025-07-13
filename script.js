@@ -188,10 +188,16 @@ function createAlarmListItem(deviceId) {
 // =================================================================
 //  LÓGICA DE LA PANTALLA DE DETALLE
 // =================================================================
+
 function showDetailScreen(deviceId) {
     currentDetailDevice = deviceId;
     showScreen('detail');
-    detailAlarmName.textContent = deviceId;
+    
+    // --- CAMBIO AQUÍ ---
+    // Capitalizamos la primera letra del nombre del dispositivo
+    const capitalizedDeviceId = deviceId.charAt(0).toUpperCase() + deviceId.slice(1);
+    detailAlarmName.textContent = capitalizedDeviceId;
+
     detailContentDiv.innerHTML = '';
 
     const card = document.createElement('div');
@@ -230,11 +236,9 @@ function showDetailScreen(deviceId) {
             detailToggle.checked = isActive;
             detailStatusBox.textContent = isActive ? 'Activada' : 'Desactivada';
             detailStatusBox.className = isActive ? 'status-box status-box-active' : 'status-box status-box-inactive';
-            
-            const isRinging = data.ringing === true; // Corregido: usa "ringing"
+            const isRinging = data.ringing === true;
             detailRinging.textContent = isRinging ? "¡SONANDO!" : "Silencio";
             detailRinging.style.color = isRinging ? "#ff453a" : "#d1d1d6";
-
             const now = Date.now();
             const lastSeen = data.last_seen || 0;
             const secondsAgo = Math.floor((now - lastSeen) / 1000);
@@ -256,6 +260,7 @@ function showDetailScreen(deviceId) {
     });
 }
 
+   
 // =================================================================
 //  LÓGICA PANTALLA DE LOG
 // =================================================================
