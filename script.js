@@ -114,21 +114,16 @@ function createAlarmListItem(deviceId) {
     const switchInput = item.querySelector('input[type="checkbox"]');
     const switchLabel = item.querySelector('.switch');
 
-    let lastData = {};
-    let wasOnline = null;
+    const alarmRef = database.ref(`alarms/${deviceId}`);
+    
+    // Este listener ahora se encarga de todo de forma simple
+    const alarmCallback = (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
 
-    function updateCardUI() {
-        if (Object.keys(lastData).length === 0) return;
-
-        const now = Date.now();
-        const lastSeen = lastData.last_seen || 0;
-        const isOnline = (now - lastSeen) < 30000;
-        const isActive = lastData.status === true;
-        
-        if (wasOnline !== null && wasOnline !== isOnline) {
-            writeToConnectionLog(deviceId, isOnline ? 'connected' : 'disconnected');
-        }
-        wasOnline = isOnline;
+        // Leemos directamente el estado calculado por la Cloud Function
+        const isOnline = data.is_online === true;
+        const isActive = data.status === true;
 
         switchInput.checked = isActive;
         if (isOnline) {
@@ -142,38 +137,12 @@ function createAlarmListItem(deviceId) {
             statusBox.textContent = 'Sin Conexión';
             statusBox.className = 'status-box status-box-offline';
         }
-    }
-
-    const alarmRef = database.ref(`alarms/${deviceId}`);
-    const alarmCallback = (snapshot) => {
-        lastData = snapshot.val() || {};
-        updateCardUI();
     };
 
-    alarmRef.once('value', (snapshot) => {
-        lastData = snapshot.val() || { status: false, last_seen: 0 };
-        const now = Date.now();
-        wasOnline = (now - (lastData.last_seen || 0)) < 30000;
-        updateCardUI();
-        alarmRef.on('value', alarmCallback);
-        activeListeners[deviceId] = { path: `alarms/${deviceId}`, callback: alarmCallback };
-    });
+    alarmRef.on('value', alarmCallback);
+    activeListeners[deviceId] = { path: `alarms/${deviceId}`, callback: alarmCallback };
 
-    const checkInterval = setInterval(() => {
-        if (!document.body.contains(item)) {
-            clearInterval(checkInterval);
-            const listenerInfo = activeListeners[deviceId];
-            if (listenerInfo) {
-                database.ref(listenerInfo.path).off('value', listenerInfo.callback);
-                delete activeListeners[deviceId];
-            }
-            return;
-        }
-        updateCardUI();
-    }, 3000);
-    
-    activeListeners[`interval_${deviceId}`] = { interval: checkInterval };
-
+    // El resto de los event listeners no cambian
     switchLabel.addEventListener('click', (event) => event.stopPropagation());
     switchInput.addEventListener('change', () => {
         if (!switchLabel.classList.contains('switch-disabled')) {
