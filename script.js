@@ -8,6 +8,7 @@
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const database = firebase.database();
+const messaging = firebase.messaging();
 
 // =================================================================
 //  REFERENCIAS A ELEMENTOS HTML
@@ -53,63 +54,47 @@ function showScreen(screenName) {
 // =================================================================
 
 function prepareNotificationButton(uid) {
-    // Comprueba si el navegador soporta notificaciones
     if ('Notification' in window) {
-        // Si ya tenemos permiso, nos aseguramos de que el token esté guardado
         if (Notification.permission === 'granted') {
             console.log("Las notificaciones ya están permitidas.");
             getAndSaveToken(uid);
             enableNotificationsButton.style.display = 'none';
-        } 
-        // Si el permiso fue denegado, no hacemos nada
-        else if (Notification.permission === 'denied') {
-            console.log("El permiso para notificaciones fue denegado previamente.");
-            enableNotificationsButton.style.display = 'none';
-        }
-        // Si no hemos pedido permiso ('default'), mostramos el botón
-        else {
+        } else if (Notification.permission !== 'denied') {
             console.log("Mostrando botón para activar notificaciones.");
             enableNotificationsButton.style.display = 'block';
             enableNotificationsButton.onclick = () => {
                 requestNotificationPermission(uid);
             };
         }
-    } else {
-        console.log("Este navegador no soporta notificaciones push.");
     }
 }
 
 function requestNotificationPermission(uid) {
-    const messaging = firebase.messaging();
-    messaging.requestPermission()
-        .then(() => {
-            console.log("Permiso concedido.");
-            enableNotificationsButton.style.display = 'none';
-            getAndSaveToken(uid);
-        })
-        .catch((err) => {
-            console.error("Permiso denegado.", err);
+    console.log("Pidiendo permiso para notificaciones...");
+    // La sintaxis correcta es a través de Notification.requestPermission
+    Notification.requestPermission()
+        .then((permission) => {
+            if (permission === 'granted') {
+                console.log("Permiso concedido.");
+                enableNotificationsButton.style.display = 'none';
+                getAndSaveToken(uid);
+            } else {
+                console.error("Permiso denegado.");
+            }
         });
 }
 
-    
-   function getAndSaveToken(uid) {
-    const messaging = firebase.messaging();
-    // Reemplaza con tu clave VAPID de la consola de Firebase
-    const vapidKey = "BGoufWpYgp_dkosFJjgW87MswaU8h7yKqc9LiqSJRiUx7Ch5-YJfA4g8A6sEPaVGVW2HxVX61lycLXyhaFuxCuY";  
+function getAndSaveToken(uid) {
+    const vapidKey = "BPD6p-g92XC6QZQu7a_QvWBTXQyQf_9t4_q...TU_CLAVE"; // Reemplaza con tu clave VAPID
     
     messaging.getToken({ vapidKey: vapidKey })
         .then((token) => {
             if (token) {
                 console.log("Token del dispositivo:", token);
-                // --- CAMBIO AQUÍ: Usamos 'update' para añadir el nuevo token ---
-                // Esto crea una estructura como: /users/{uid}/fcm_tokens/{token_largo}: true
                 const userTokensRef = database.ref(`users/${uid}/fcm_tokens`);
                 const updates = {};
                 updates[token] = true;
                 userTokensRef.update(updates);
-            } else {
-                console.log("No se pudo obtener el token.");
             }
         })
         .catch((err) => {
@@ -124,7 +109,7 @@ auth.onAuthStateChanged((user) => {
     if (user) {
         showScreen('dashboard');
         loadUserDashboard(user.uid);
-	prepareNotificationButton(user.uid);
+        prepareNotificationButton(user.uid);
     } else {
         // Limpia todos los listeners y temporizadores al cerrar sesión
         for (const key in activeListeners) {
