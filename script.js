@@ -1,15 +1,9 @@
 // =================================================================
 //  CONFIGURACIÓN E INICIALIZACIÓN
 // =================================================================
-const firebaseConfig = {
-    apiKey: "AIzaSyCR2dogshBUZ9fhQTUU5gJOERjPmThW4Uw",
-    authDomain: "alrm-egin360.firebaseapp.com",
-    databaseURL: "https://alrm-egin360-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "alrm-egin360",
-    storageBucket: "alrm-egin360.appspot.com",
-    messagingSenderId: "631536838875",
-    appId: "1:631536838875:web:0850c1fe09cf3a998644fe"
-};
+
+// El objeto 'firebaseConfig' ha sido eliminado de este archivo.
+// Se carga desde 'firebase-config.js'
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
