@@ -20,6 +20,7 @@ const logContainer = document.getElementById('log-container');
 const loginForm = document.getElementById('login-form');
 const logoutButton = document.getElementById('logout-button');
 const alarmsListDiv = document.getElementById('alarms-list');
+const enableNotificationsButton = document.getElementById('enable-notifications-button');
 
 const backToDashboardButton = document.getElementById('back-to-dashboard-button');
 const detailAlarmName = document.getElementById('detail-alarm-name');
@@ -50,28 +51,64 @@ function showScreen(screenName) {
 // =================================================================
 //  LÓGICA DE NOTIFICACIONES PUSH
 // =================================================================
-function setupPushNotifications(uid) {
-    const messaging = firebase.messaging();
-    const userTokensRef = database.ref(`users/${uid}/fcm_tokens`);
 
-    // Pide permiso
-    messaging.requestPermission().then(() => {
-        // Obtiene el token del dispositivo
-        return messaging.getToken({ 
-            vapidKey: "BGoufWpYgp_dkosFJjgW87MswaU8h7yKqc9LiqSJRiUx7Ch5-YJfA4g8A6sEPaVGVW2HxVX61lycLXyhaFuxCuY" // Reemplaza con tu clave de FCM
-        });
-    }).then((token) => {
-        if (token) {
-            // Guarda el token en la base de datos
-            const updates = {};
-            updates[token] = true;
-            userTokensRef.update(updates);
+function prepareNotificationButton(uid) {
+    // Comprueba si el navegador soporta notificaciones
+    if ('Notification' in window) {
+        // Si ya tenemos permiso, nos aseguramos de que el token esté guardado
+        if (Notification.permission === 'granted') {
+            console.log("Las notificaciones ya están permitidas.");
+            getAndSaveToken(uid);
+            enableNotificationsButton.style.display = 'none';
+        } 
+        // Si el permiso fue denegado, no hacemos nada
+        else if (Notification.permission === 'denied') {
+            console.log("El permiso para notificaciones fue denegado previamente.");
+            enableNotificationsButton.style.display = 'none';
         }
-    }).catch((err) => {
-        console.error("No se pudo obtener el permiso para notificaciones.", err);
-    });
+        // Si no hemos pedido permiso ('default'), mostramos el botón
+        else {
+            console.log("Mostrando botón para activar notificaciones.");
+            enableNotificationsButton.style.display = 'block';
+            enableNotificationsButton.onclick = () => {
+                requestNotificationPermission(uid);
+            };
+        }
+    } else {
+        console.log("Este navegador no soporta notificaciones push.");
+    }
 }
 
+function requestNotificationPermission(uid) {
+    const messaging = firebase.messaging();
+    messaging.requestPermission()
+        .then(() => {
+            console.log("Permiso concedido.");
+            enableNotificationsButton.style.display = 'none';
+            getAndSaveToken(uid);
+        })
+        .catch((err) => {
+            console.error("Permiso denegado.", err);
+        });
+}
+
+function getAndSaveToken(uid) {
+    const messaging = firebase.messaging();
+    // Reemplaza con tu clave VAPID de la consola de Firebase
+    const vapidKey = "BGoufWpYgp_dkosFJjgW87MswaU8h7yKqc9LiqSJRiUx7Ch5-YJfA4g8A6sEPaVGVW2HxVX61lycLXyhaFuxCuY"; 
+    
+    messaging.getToken({ vapidKey: vapidKey })
+        .then((token) => {
+            if (token) {
+                console.log("Token del dispositivo:", token);
+                const userTokensRef = database.ref(`users/${uid}/fcm_tokens/${token}`);
+                userTokensRef.set(true); // Guarda el token en la base de datos
+            }
+        })
+        .catch((err) => {
+            console.error("Error al obtener el token:", err);
+        });
+}
 
 // =================================================================
 //  CONTROLADOR PRINCIPAL (AUTENTICACIÓN)
@@ -80,7 +117,7 @@ auth.onAuthStateChanged((user) => {
     if (user) {
         showScreen('dashboard');
         loadUserDashboard(user.uid);
-	setupPushNotifications(user.uid); 
+	prepareNotificationButton(user.uid);
     } else {
         // Limpia todos los listeners y temporizadores al cerrar sesión
         for (const key in activeListeners) {
