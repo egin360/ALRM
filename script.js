@@ -87,18 +87,20 @@ function requestNotificationPermission(uid) {
 function getAndSaveToken(uid) {
     const vapidKey = "BGoufWpYgp_dkosFJjgW87MswaU8h7yKqc9LiqSJRiUx7Ch5-YJfA4g8A6sEPaVGVW2HxVX61lycLXyhaFuxCuY"; // Reemplaza con tu clave VAPID
     
-    messaging.getToken({ vapidKey: vapidKey })
-        .then((token) => {
-            if (token) {
-                console.log("Token del dispositivo:", token);
-                const userTokensRef = database.ref(`users/${uid}/fcm_tokens`);
-                const updates = {};
-                updates[token] = true;
-                userTokensRef.update(updates);
-            }
-        })
-        .catch((err) => {
-            console.error("Error al obtener el token:", err);
+    navigator.serviceWorker.register('/ALRM/firebase-messaging-sw.js')
+        .then((registration) => {
+            messaging.getToken({ 
+                vapidKey: vapidKey,
+                serviceWorkerRegistration: registration 
+            }).then((token) => {
+                if (token) {
+                    console.log("Token del dispositivo:", token);
+                    const userTokensRef = database.ref(`users/${uid}/fcm_tokens`);
+                    const updates = {};
+                    updates[token] = true;
+                    userTokensRef.update(updates);
+                }
+            }).catch((err) => console.error("Error al obtener token:", err));
         });
 }
 
