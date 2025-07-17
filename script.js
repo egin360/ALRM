@@ -85,7 +85,7 @@ function requestNotificationPermission(uid) {
 }
 
 function getAndSaveToken(uid) {
-    const vapidKey = "BGoufWpYgp_dkosFJjgW87MswaU8h7yKqc9LiqSJRiUx7Ch5-YJfA4g8A6sEPaVGVW2HxVX61lycLXyhaFuxCuY"; // Reemplaza con tu clave VAPID
+    const vapidKey = "JL_sLZEscNfOPJQeb4bB90lORw_leLVgwVnwgmDcTW0"; // Reemplaza con tu clave VAPID
     
     messaging.getToken({ vapidKey: vapidKey })
         .then((token) => {
