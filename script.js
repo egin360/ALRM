@@ -92,17 +92,24 @@ function requestNotificationPermission(uid) {
         });
 }
 
-function getAndSaveToken(uid) {
+    
+   function getAndSaveToken(uid) {
     const messaging = firebase.messaging();
     // Reemplaza con tu clave VAPID de la consola de Firebase
-    const vapidKey = "BGoufWpYgp_dkosFJjgW87MswaU8h7yKqc9LiqSJRiUx7Ch5-YJfA4g8A6sEPaVGVW2HxVX61lycLXyhaFuxCuY"; 
+    const vapidKey = "BGoufWpYgp_dkosFJjgW87MswaU8h7yKqc9LiqSJRiUx7Ch5-YJfA4g8A6sEPaVGVW2HxVX61lycLXyhaFuxCuY";  
     
     messaging.getToken({ vapidKey: vapidKey })
         .then((token) => {
             if (token) {
                 console.log("Token del dispositivo:", token);
-                const userTokensRef = database.ref(`users/${uid}/fcm_tokens/${token}`);
-                userTokensRef.set(true); // Guarda el token en la base de datos
+                // --- CAMBIO AQUÍ: Usamos 'update' para añadir el nuevo token ---
+                // Esto crea una estructura como: /users/{uid}/fcm_tokens/{token_largo}: true
+                const userTokensRef = database.ref(`users/${uid}/fcm_tokens`);
+                const updates = {};
+                updates[token] = true;
+                userTokensRef.update(updates);
+            } else {
+                console.log("No se pudo obtener el token.");
             }
         })
         .catch((err) => {
