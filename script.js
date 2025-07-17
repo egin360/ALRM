@@ -48,12 +48,39 @@ function showScreen(screenName) {
 }
 
 // =================================================================
+//  LÓGICA DE NOTIFICACIONES PUSH
+// =================================================================
+function setupPushNotifications(uid) {
+    const messaging = firebase.messaging();
+    const userTokensRef = database.ref(`users/${uid}/fcm_tokens`);
+
+    // Pide permiso
+    messaging.requestPermission().then(() => {
+        // Obtiene el token del dispositivo
+        return messaging.getToken({ 
+            vapidKey: "BGoufWpYgp_dkosFJjgW87MswaU8h7yKqc9LiqSJRiUx7Ch5-YJfA4g8A6sEPaVGVW2HxVX61lycLXyhaFuxCuY" // Reemplaza con tu clave de FCM
+        });
+    }).then((token) => {
+        if (token) {
+            // Guarda el token en la base de datos
+            const updates = {};
+            updates[token] = true;
+            userTokensRef.update(updates);
+        }
+    }).catch((err) => {
+        console.error("No se pudo obtener el permiso para notificaciones.", err);
+    });
+}
+
+
+// =================================================================
 //  CONTROLADOR PRINCIPAL (AUTENTICACIÓN)
 // =================================================================
 auth.onAuthStateChanged((user) => {
     if (user) {
         showScreen('dashboard');
         loadUserDashboard(user.uid);
+	setupPushNotifications(user.uid); 
     } else {
         // Limpia todos los listeners y temporizadores al cerrar sesión
         for (const key in activeListeners) {
