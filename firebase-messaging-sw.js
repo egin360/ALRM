@@ -16,12 +16,59 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// Muestra la notificación cuando llega
+// ✅ MANEJA TODOS LOS TIPOS DE MENSAJES CORRECTAMENTE
 messaging.onBackgroundMessage((payload) => {
-    const notificationTitle = payload.notification.title;
-    const notificationOptions = {
-        body: payload.notification.body,
-        icon: 'icono.png'
-    };
-    self.registration.showNotification(notificationTitle, notificationOptions);
+    console.log('Mensaje recibido en segundo plano:', payload);
+    
+    // Identificar el origen del mensaje
+    const source = payload.data?.source || 'unknown';
+    
+    if (source === 'esp32') {
+        // 📡 MENSAJES DEL ESP32 - Manejo personalizado
+        console.log('Mensaje del ESP32 recibido');
+        
+        const notificationTitle = payload.data?.title || payload.notification?.title || 'ESP32 Alert';
+        const notificationOptions = {
+            body: payload.data?.body || payload.notification?.body || 'Sensor notification',
+            icon: 'icono.png',
+            badge: 'icono.png',
+            tag: `esp32_${payload.data?.deviceId || 'sensor'}`, // Evita duplicados del mismo sensor
+            data: payload.data,
+            requireInteraction: true, // Mantiene la notificación visible
+            actions: [
+                {
+                    action: 'view',
+                    title: 'Ver detalles'
+                },
+                {
+                    action: 'dismiss',
+                    title: 'Descartar'
+                }
+            ]
+        };
+        
+        self.registration.showNotification(notificationTitle, notificationOptions);
+        
+    } else if (source === 'cloud_function') {
+        // 🔗 MENSAJES DE TU CLOUD FUNCTION - Dejar que Firebase maneje automáticamente
+        console.log('Mensaje de Cloud Function - Firebase lo maneja automáticamente');
+        // ❌ NO hacemos nada aquí - Firebase ya muestra la notificación automáticamente
+        // porque tu Cloud Function envía un objeto "notification"
+        
+    } else {
+        // 🤔 MENSAJES SIN IDENTIFICAR - Manejo por defecto
+        console.log('Mensaje sin identificar, aplicando manejo por defecto');
+        
+        // Solo mostrar si NO tiene notification object (para evitar duplicados)
+        if (!payload.notification && payload.data) {
+            const notificationTitle = payload.data.title || 'Notificación';
+            const notificationOptions = {
+                body: payload.data.body || 'Nueva notificación',
+                icon: 'icono.png',
+                data: payload.data
+            };
+            
+            self.registration.showNotification(notificationTitle, notificationOptions);
+        }
+    }
 });
