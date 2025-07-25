@@ -298,12 +298,25 @@ function showLogScreen(deviceId) {
             });
             const entryDiv = document.createElement('div');
             entryDiv.className = 'log-entry';
-            if (log.event === 'connected') {
-                entryDiv.className += ' log-entry-connected';
-                entryDiv.textContent = `[${formattedDate}] Conectado`;
-            } else {
-                entryDiv.className += ' log-entry-disconnected';
-                entryDiv.textContent = `[${formattedDate}] Desconectado`;
+            switch (log.event) {
+                case 'connected':
+                    entryDiv.className += ' log-entry-connected';
+                    entryDiv.textContent = `[${formattedDate}] Conectado`;
+                    break;
+                case 'disconnected':
+                    entryDiv.className += ' log-entry-disconnected';
+                    entryDiv.textContent = `[${formattedDate}] Desconectado`;
+                    break;
+                case 'initiated':
+                    entryDiv.className += ' log-entry-initiated';
+                    entryDiv.textContent = `[${formattedDate}] Iniciado`;
+                    break;
+                case 'wifi_recon':
+                    entryDiv.className += ' log-entry-wifi-recon';
+                    entryDiv.textContent = `[${formattedDate}] Wifi reconectado`;
+                    break;
+                default:
+                    entryDiv.textContent = `[${formattedDate}] Evento desconocido: ${log.event}`;
             }
             logContentDiv.appendChild(entryDiv);
         });
