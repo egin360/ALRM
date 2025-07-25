@@ -311,9 +311,9 @@ function showLogScreen(deviceId) {
                     entryDiv.className += ' log-entry-initiated';
                     entryDiv.textContent = `[${formattedDate}] Iniciado`;
                     break;
-                case 'wifi_recon':
+                case 'wifirecon':
                     entryDiv.className += ' log-entry-wifirecon';
-                    entryDiv.textContent = `[${formattedDate}] Wifi reconectado`;
+                    entryDiv.textContent = `[${formattedDate}] Wifi reconect`;
                     break;
                 default:
                     entryDiv.textContent = `[${formattedDate}] Evento desconocido: ${log.event}`;
