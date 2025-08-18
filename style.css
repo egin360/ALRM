@@ -241,7 +241,8 @@ button:hover {
 }
 
 .log-entry-connected {
-    color: #34c759;
+    color: #ff8000;
+  /*  color: #34c759;*/
 }
 
 .log-entry-disconnected {
@@ -321,4 +322,5 @@ input:checked + .slider {
 input:checked + .slider:before {
     transform: translateX(20px);
 }
+
 
