@@ -309,7 +309,7 @@ function showLogScreen(deviceId) {
                     break;
                 case 'initiated':
                     entryDiv.className += ' log-entry-initiated';
-                    entryDiv.textContent = `[${formattedDate}] Iniciado`;
+                    entryDiv.textContent = `[${formattedDate}] Iniciadosss`;
                     break;
                 case 'wifirecon':
                     entryDiv.className += ' log-entry-wifirecon';
@@ -420,6 +420,7 @@ loginForm.addEventListener('submit', (e) => {
 logoutButton.addEventListener('click', () => {
     auth.signOut();
 });
+
 
 
 
