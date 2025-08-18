@@ -254,6 +254,21 @@ button:hover {
 .log-entry-wifirecon {
     color: #007aff;
 }
+.log-entry-sirenaPuerta {
+    color: #ff8000;
+}
+.log-entry-sirenaHall {
+    color: #ff8000;
+}
+.log-entry-sirenaHabitacion {
+    color: #ff8000;
+}
+.log-entry-sirenaSalon {
+    color: #ff8000;
+}
+.log-entry-sirena {
+    color: #ff8000;
+}
 
 /* Estilos para el Interruptor (Toggle Switch) */
 .switch {
@@ -306,3 +321,4 @@ input:checked + .slider {
 input:checked + .slider:before {
     transform: translateX(20px);
 }
+
