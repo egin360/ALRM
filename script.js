@@ -324,7 +324,7 @@ function showLogScreen(deviceId) {
                     entryDiv.textContent = `[${formattedDate}] Alarma sonando - Hall`;
                     break;
                 case 'sirenaHabitacion':
-                    entryDiv.className += ' log-entry-sirenaHabitacion';
+                    entryDiv.className += ' log-entry-sirenaHabitacion'; 
                     entryDiv.textContent = `[${formattedDate}] Alarma sonando - Habitacion`;
                     break;
                 case 'sirenaSalon':
@@ -419,4 +419,5 @@ loginForm.addEventListener('submit', (e) => {
 logoutButton.addEventListener('click', () => {
     auth.signOut();
 });
+
 
