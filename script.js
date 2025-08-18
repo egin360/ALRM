@@ -315,6 +315,7 @@ function showLogScreen(deviceId) {
                     entryDiv.className += ' log-entry-wifirecon';
                     entryDiv.textContent = `[${formattedDate}] Wifi reconect`;
                     break;
+                    // Se añade las sirenas segun sensor
                 case 'sirenaPuerta':
                     entryDiv.className += ' log-entry-sirenaPuerta';
                     entryDiv.textContent = `[${formattedDate}] Alarma sonando - Puerta`;
@@ -419,5 +420,6 @@ loginForm.addEventListener('submit', (e) => {
 logoutButton.addEventListener('click', () => {
     auth.signOut();
 });
+
 
 
