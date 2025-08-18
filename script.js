@@ -315,6 +315,26 @@ function showLogScreen(deviceId) {
                     entryDiv.className += ' log-entry-wifirecon';
                     entryDiv.textContent = `[${formattedDate}] Wifi reconect`;
                     break;
+                case 'sirenaPuerta':
+                    entryDiv.className += ' log-entry-sirenaPuerta';
+                    entryDiv.textContent = `[${formattedDate}] Alarma sonando - Puerta`;
+                    break;
+                case 'sirenaHall':
+                    entryDiv.className += ' log-entry-sirenaHall';
+                    entryDiv.textContent = `[${formattedDate}] Alarma sonando - Hall`;
+                    break;
+                case 'sirenaHabitacion':
+                    entryDiv.className += ' log-entry-sirenaHabitacion';
+                    entryDiv.textContent = `[${formattedDate}] Alarma sonando - Habitacion`;
+                    break;
+                case 'sirenaSalon':
+                    entryDiv.className += ' log-entry-sirenaSalon';
+                    entryDiv.textContent = `[${formattedDate}] Alarma sonando - Salon`;
+                    break;
+                case 'sirena':
+                    entryDiv.className += ' log-entry-sirena';
+                    entryDiv.textContent = `[${formattedDate}] Alarma sonando`;
+                    break;
                 default:
                     entryDiv.textContent = `[${formattedDate}] Evento desconocido: ${log.event}`;
             }
@@ -399,3 +419,4 @@ loginForm.addEventListener('submit', (e) => {
 logoutButton.addEventListener('click', () => {
     auth.signOut();
 });
+
