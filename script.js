@@ -331,7 +331,6 @@ function showDetailScreen(deviceId) {
         database.ref(`alarms/${deviceId}`).update(updates);
     });
 
-    database.ref(`alarms/${deviceId}/wifi_rssi_request`).set(true);
 }
 // Añade esta nueva función al final de tu archivo script.js
 function getSignalStrengthClass(rssi) {
@@ -498,6 +497,7 @@ loginForm.addEventListener('submit', (e) => {
 logoutButton.addEventListener('click', () => {
     auth.signOut();
 });
+
 
 
 
