@@ -290,27 +290,32 @@ function showDetailScreen(deviceId) {
                 detailStatusBox.style.color = '';
             }
 
-            const now = Date.now();
-            const lastSeen = data.last_seen || 0;
-            const secondsAgo = Math.floor((now - lastSeen) / 1000);
-
-            if (secondsAgo < 30) {
-                detailConnection.textContent = "En línea";
-                detailConnection.style.color = "#34c759";
-            } else {
-                detailConnection.textContent = "Desconectado";
-                detailConnection.style.color = "#ff453a";
-            }
-            
-            // Actualiza el valor del RSSI y el ícono de cobertura
-            if (data.wifi_rssi !== undefined) {
-                detailWifiRssi.textContent = `${data.wifi_rssi} dBm`;
-                // Elimina la clase anterior y añade la nueva
-                wifiSignalIcon.className = `wifi-signal ${getSignalStrengthClass(data.wifi_rssi)}`;
-            } else {
-                detailWifiRssi.textContent = "N/A";
-                wifiSignalIcon.className = "wifi-signal wifi-signal-level-0";
-            }
+			const now = Date.now();
+			const lastSeen = data.last_seen || 0;
+			const secondsAgo = Math.floor((now - lastSeen) / 1000);
+			
+			if (secondsAgo < 30) {
+			    // ESTADO: EN LÍNEA
+			    detailConnection.textContent = "En línea";
+			    detailConnection.style.color = "#34c759";
+			
+			    // Mostramos la señal Wifi real solo si está en línea
+			    if (data.wifi_rssi !== undefined) {
+			        detailWifiRssi.textContent = `${data.wifi_rssi} dBm`;
+			        wifiSignalIcon.className = `wifi-signal ${getSignalStrengthClass(data.wifi_rssi)}`;
+			    } else {
+			        detailWifiRssi.textContent = "N/A";
+			        wifiSignalIcon.className = "wifi-signal wifi-signal-level-0";
+			    }
+			
+			} else {
+			    // ESTADO: DESCONECTADO
+			    detailConnection.textContent = "Desconectado";
+			    detailConnection.style.color = "#ff453a";
+			
+			    detailWifiRssi.textContent = "---";
+			    wifiSignalIcon.className = "wifi-signal wifi-signal-level-0";
+			}
         }
     };
 
@@ -497,6 +502,7 @@ loginForm.addEventListener('submit', (e) => {
 logoutButton.addEventListener('click', () => {
     auth.signOut();
 });
+
 
 
 
