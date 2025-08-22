@@ -314,7 +314,7 @@ function showDetailScreen(deviceId) {
 			    detailConnection.style.color = "#ff453a";
 			
 			    detailWifiRssi.textContent = "---";
-			    wifiSignalIcon.className = "wifi-signal wifi-signal-level-0";
+			    wifiSignalIcon.className = "wifi-signal wifi-signal-disconnected";
 			}
         }
     };
@@ -502,6 +502,7 @@ loginForm.addEventListener('submit', (e) => {
 logoutButton.addEventListener('click', () => {
     auth.signOut();
 });
+
 
 
 
