@@ -339,13 +339,13 @@ function showDetailScreen(deviceId) {
 }
 // Añade esta nueva función al final de tu archivo script.js
 function getSignalStrengthClass(rssi) {
-    if (rssi >= -50) {
+    if (rssi >= -60) {
         return 'wifi-signal-level-4'; // Muy Bien
-    } else if (rssi >= -67) {
+    } else if (rssi >= -70) {
         return 'wifi-signal-level-3'; // Bien
-    } else if (rssi >= -75) {
+    } else if (rssi >= -80) {
         return 'wifi-signal-level-2'; // Medio
-    } else if (rssi >= -85) {
+    } else if (rssi >= -90) {
         return 'wifi-signal-level-1'; // Poco
     } else {
         return 'wifi-signal-level-0'; // Nada
@@ -502,6 +502,7 @@ loginForm.addEventListener('submit', (e) => {
 logoutButton.addEventListener('click', () => {
     auth.signOut();
 });
+
 
 
 
