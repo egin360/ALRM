@@ -366,14 +366,25 @@ input:checked + .slider:before {
 .wifi-signal-bar:nth-child(3) { height: 75%; }
 .wifi-signal-bar:nth-child(4) { height: 100%; }
 
+
 /* Estilos para cada nivel de señal (0 a 4) */
-.wifi-signal-level-0 .wifi-signal-bar { background-color: #ff453a; }
+/* Nivel 0 (señal muy baja)*/
+.wifi-signal-level-0 .wifi-signal-bar { background-color: #555; }
+/* Nivel 1 */
 .wifi-signal-level-1 .wifi-signal-bar:nth-child(1) { background-color: #ff453a; }
+/* Nivel 2 */
 .wifi-signal-level-2 .wifi-signal-bar:nth-child(1),
 .wifi-signal-level-2 .wifi-signal-bar:nth-child(2) { background-color: #ff8000; }
+/* Nivel 3 */
 .wifi-signal-level-3 .wifi-signal-bar:nth-child(1),
 .wifi-signal-level-3 .wifi-signal-bar:nth-child(2),
 .wifi-signal-level-3 .wifi-signal-bar:nth-child(3) { background-color: #34c759; }
+/* Nivel 4 */
 .wifi-signal-level-4 .wifi-signal-bar { background-color: #34c759; }
+/*Para el estado totalmente desconectado */
+.wifi-signal-disconnected .wifi-signal-bar {
+    background-color: #ff453a; /* Todas las barras en rojo */
+}
+
 
 
